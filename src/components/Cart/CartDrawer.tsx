@@ -1,4 +1,3 @@
-import React from 'react'
 import { X, Plus, Minus, Trash2 } from 'lucide-react'
 import { useCart } from '../../contexts/CartContext'
 import { formatPrice } from '../../utils/format'
