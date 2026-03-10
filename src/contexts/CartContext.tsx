@@ -1,19 +1,28 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase } from '../lib/supabaseClient'
 import { useAuth } from './AuthContext'
 
 export interface CartItem {
   id: string
+  user_id: string
   product_id: string
+  variant_id?: string
   quantity: number
   created_at: string
   updated_at: string
   products: {
     id: string
-    name: string
+    title: string
     price: number
-    image_urls: string[]
-    stock_quantity: number
+    images: string[]
+    category: string
+  }
+  product_variants?: {
+    id: string
+    size: string
+    color: string
+    color_hex: string
+    supply: number
   }
 }
 
@@ -54,10 +63,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           *,
           products (
             id,
-            name,
+            title,
             price,
-            image_urls,
-            stock_quantity
+            category
+          ),
+          product_variants (
+            id,
+            color,
+            color_hex,
+            images
           )
         `)
         .eq('user_id', profile.id)
@@ -79,10 +93,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       if (!profile) return { error: 'User not authenticated' }
 
-      // Check if product exists and has enough stock
+      // Check if product exists and is active
       const { data: product, error: productError } = await supabase
         .from('products')
-        .select('stock_quantity, is_active')
+        .select('is_active')
         .eq('id', productId)
         .single()
 
@@ -94,20 +108,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return { error: 'Product is not available' }
       }
 
-      if (product.stock_quantity < quantity) {
-        return { error: 'Not enough stock available' }
-      }
-
       // Check if item already in cart
       const existingItem = cartItems.find(item => item.product_id === productId)
 
       if (existingItem) {
         // Update quantity
         const newQuantity = existingItem.quantity + quantity
-        if (product.stock_quantity < newQuantity) {
-          return { error: 'Not enough stock available' }
-        }
-
+        
         const { error } = await supabase
           .from('cart_items')
           .update({ quantity: newQuantity })
@@ -160,21 +167,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       if (!profile) return { error: 'User not authenticated' }
       if (quantity <= 0) return { error: 'Quantity must be greater than 0' }
-
-      // Check stock
-      const { data: product, error: productError } = await supabase
-        .from('products')
-        .select('stock_quantity')
-        .eq('id', productId)
-        .single()
-
-      if (productError || !product) {
-        return { error: 'Product not found' }
-      }
-
-      if (product.stock_quantity < quantity) {
-        return { error: 'Not enough stock available' }
-      }
 
       const { error } = await supabase
         .from('cart_items')
