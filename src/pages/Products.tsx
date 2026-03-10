@@ -1,24 +1,51 @@
 import { useState } from 'react';
 import { ProductCard } from '../components/ProductCard';
 import { mockProducts } from '../data/mockData';
-import { Filter, Grid, List } from 'lucide-react';
+import { Filter, Grid, List, Search } from 'lucide-react';
 
 export function Products() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState('featured');
   const [showFilters, setShowFilters] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filter products based on search query
+  const filteredProducts = mockProducts.filter(product =>
+    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (product.description && product.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    product.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-primary-50">
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
+        {/* Header with Search */}
         <div className="mb-8">
           <h1 className="text-3xl font-heading font-bold text-primary-900 mb-2">
             All Products
           </h1>
-          <p className="text-primary-600">
+          <p className="text-primary-600 mb-6">
             Discover our complete collection of athletic apparel and accessories
           </p>
+          
+          {/* Search Bar */}
+          <div className="max-w-2xl">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search products..."
+                className="w-full px-4 py-3 pr-12 border border-primary-200 rounded-lg focus:outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20"
+              />
+              <Search className="absolute right-4 top-3.5 h-5 w-5 text-primary-400" />
+            </div>
+            {searchQuery && (
+              <p className="mt-2 text-sm text-primary-600">
+                Searching for: "{searchQuery}"
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
@@ -123,7 +150,8 @@ export function Products() {
             {/* Toolbar */}
             <div className="bg-white rounded-lg shadow-sm p-4 mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
               <div className="text-sm text-primary-600">
-                {mockProducts.length} products found
+                {filteredProducts.length} products found
+                {searchQuery && ` for "${searchQuery}"`}
               </div>
               
               <div className="flex items-center gap-4">
@@ -155,16 +183,42 @@ export function Products() {
               </div>
             </div>
 
+            {/* No Results */}
+            {filteredProducts.length === 0 && (
+              <div className="text-center py-12">
+                <Search className="h-12 w-12 text-primary-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-primary-900 mb-2">
+                  No products found
+                </h3>
+                <p className="text-primary-600">
+                  {searchQuery 
+                    ? `No products match "${searchQuery}". Try a different search term.`
+                    : 'No products available at the moment.'
+                  }
+                </p>
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="mt-4 text-accent-600 hover:text-accent-700 font-medium"
+                  >
+                    Clear search
+                  </button>
+                )}
+              </div>
+            )}
+
             {/* Products */}
-            <div className={`grid gap-6 ${
-              viewMode === 'grid' 
-                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
-                : 'grid-cols-1'
-            }`}>
-              {mockProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+            {filteredProducts.length > 0 && (
+              <div className={`grid gap-6 ${
+                viewMode === 'grid' 
+                  ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
+                  : 'grid-cols-1'
+              }`}>
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            )}
 
             {/* Pagination */}
             <div className="mt-12 flex justify-center">

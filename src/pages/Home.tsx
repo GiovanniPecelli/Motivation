@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Shield, Truck, RefreshCw } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
 import { mockProducts } from '../data/mockData';
 import gallery1 from '../assets/siteimages/openart-image_-dOJt8BC_1772402269171_raw.jpg';

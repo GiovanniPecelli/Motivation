@@ -1,50 +1,105 @@
-# React + TypeScript + Vite
+# 🛒 Motivation Store
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+E-commerce completo con sistema a doppio ruolo (Customer/Host) basato su Supabase.
 
-Currently, two official plugins are available:
+## 🚀 Tecnologie
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Frontend**: React + TypeScript + Vite
+- **Backend**: Supabase (Database + Auth + Storage)
+- **Styling**: TailwindCSS + Lucide Icons
+- **State Management**: React Context
+- **Forms**: React Hook Form + Zod Validation
+- **Routing**: React Router
 
-## Expanding the ESLint configuration
+## 🎯 Funzionalità
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+### 👤 Cliente (Customer)
+- Registrazione e login sicuri
+- Navigazione prodotti
+- Carrello della spesa real-time
+- Gestione ordini
+- Profilo utente
 
-- Configure the top-level `parserOptions` property like this:
+### 🏪 Host (Gestore Negozio)
+- Dashboard con statistiche
+- Aggiunta/modifica prodotti
+- Upload immagini
+- Gestione inventario
+- Monitoraggio vendite
+- Analytics vendite
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## 🔧 Setup Rapido
+
+### 1. Database
+Esegui lo script `database-schema.sql` nel Supabase Dashboard SQL Editor.
+
+### 2. Environment Variables
+Crea un file `.env` basato su `.env.example`:
+```env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
-
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+### 3. Avvio
+```bash
+npm install
+npm run dev
 ```
+
+## 📁 Struttura Progetto
+
+```
+src/
+├── components/
+│   ├── Auth/          # Form di autenticazione
+│   ├── Host/          # Componenti host
+│   ├── Cart/          # Gestione carrello
+│   └── Header.tsx     # Navigazione principale
+├── contexts/
+│   ├── AuthContext.tsx    # Stato autenticazione
+│   ├── RoleContext.tsx    # Gestione ruoli
+│   └── CartContext.tsx    # Stato carrello
+├── pages/
+│   ├── AuthPage.tsx       # Login/Registrazione
+│   ├── RoleSwitchPage.tsx # Scelta ruolo
+│   └── ...
+└── lib/
+    └── supabase.ts    # Client Supabase
+```
+
+## 🔐 Sicurezza
+
+- **Row Level Security** su tutte le tabelle
+- **Environment variables** protette
+- **Ruoli separati** con permessi specifici
+- **Validazione input** con Zod schemas
+
+## 🛠️ Sviluppo
+
+### Comandi Utili
+```bash
+npm run dev      # Server sviluppo
+npm run build    # Build produzione
+npm run preview  # Preview build
+npm run lint     # ESLint check
+```
+
+### Database Schema
+Il database include:
+- `profiles` - Estensione auth.users
+- `products` - Catalogo prodotti
+- `categories` - Categorie prodotti
+- `cart_items` - Carrello utenti
+- `orders` - Storico ordini
+- `order_items` - Dettagli ordini
+
+## 🚀 Deployment
+
+1. **Build**: `npm run build`
+2. **Environment**: Configura variabili su hosting
+3. **Database**: Assicurati che RLS sia attivo
+4. **Storage**: Configura bucket per immagini
+
+## 📄 Licenza
+
+Progetto sviluppato per Motivation Store.

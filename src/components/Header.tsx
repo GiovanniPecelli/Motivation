@@ -1,54 +1,100 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, ShoppingCart, Menu, X, User } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ShoppingCart, Menu, X, User, Crown } from 'lucide-react';
 import { categories } from '../data/mockData';
 import logoRemoveBg from '../assets/logo-removebg-preview.png';
+import { useAuth } from '../contexts/AuthContext';
+import { useCart } from '../contexts/CartContext';
+import { useSimpleRole } from '../contexts/SimpleRoleContext';
+import { CartDrawer } from './Cart/CartDrawer';
 
 export function Header() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isCategoryOpen, setIsCategoryOpen] = useState<string | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isCategoryOpen, setIsCategoryOpen] = useState<string | null>(null)
+  const [isCartOpen, setIsCartOpen] = useState(false)
+  const { profile } = useAuth()
+  const { cartCount } = useCart()
+  const { isHost } = useSimpleRole()
+  const navigate = useNavigate();
 
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-50">
-      <div className="container mx-auto px-4">
-        {/* Top Banner */}
-        <div className="bg-primary-900 text-white text-center py-2 text-sm">
-          FREE SHIPPING ON ORDERS OVER $50 | EASY RETURNS
-        </div>
+    <header className="bg-white shadow-sm sticky top-0 z-50 w-full">
+      {/* Top Banner - Full Width */}
+      <div className="bg-primary-900 text-white text-center py-3 text-sm w-full">
+        <span className="font-medium tracking-wide">PUSH YOUR LIMITS • EXCEED YOUR EXPECTATIONS • UNLOCK YOUR POTENTIAL</span>
+      </div>
+
+      <div className="w-full px-4">
 
         {/* Main Header */}
-        <div className="flex items-center justify-between py-4">
+        <div className="flex items-center justify-between py-4 w-full">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <img 
-              src={logoRemoveBg} 
-              alt="Motivation" 
-              className="h-8 w-auto bg-transparent"
-            />
-          </Link>
-
-          {/* Search Bar */}
-          <div className="hidden md:flex flex-1 max-w-lg mx-8">
-            <div className="relative w-full">
-              <input
-                type="text"
-                placeholder="Search products..."
-                className="w-full px-4 py-2 pr-10 border border-primary-200 rounded-lg focus:outline-none focus:border-accent-500"
+          <div className="flex-shrink-0 flex items-center">
+            <Link to="/" className="flex items-center space-x-3">
+              <img
+                src={logoRemoveBg}
+                alt="Motivation"
+                className="h-10 w-auto"
               />
-              <Search className="absolute right-3 top-2.5 h-5 w-5 text-primary-400" />
-            </div>
+              <div className="hidden md:flex items-center">
+                <div className="h-8 w-px bg-gray-300 mr-3"></div>
+                <span className="text-2xl font-bold tracking-wider text-primary-900 font-sans uppercase">
+                  MOTIVATION
+                </span>
+              </div>
+            </Link>
           </div>
 
           {/* Right Icons */}
           <div className="flex items-center space-x-4">
-            <button className="p-2 hover:bg-primary-50 rounded-lg transition-colors">
-              <User className="h-6 w-6 text-primary-700" />
-            </button>
-            <button className="p-2 hover:bg-primary-50 rounded-lg transition-colors relative">
+            {profile ? (
+              <div className="flex items-center space-x-2">
+                <Link 
+                  to="/profile" 
+                  className="flex items-center space-x-2 p-2 hover:bg-primary-50 rounded-lg transition-colors group"
+                  title="Profilo"
+                >
+                  <User className="h-6 w-6 text-primary-700" />
+                  <div className="hidden md:flex flex-col items-start">
+                    <span className="text-sm font-medium text-gray-900 group-hover:text-primary-700">
+                      {profile.full_name || profile.email}
+                    </span>
+                    <span className="text-xs text-gray-500 flex items-center">
+                      {isHost ? (
+                        <>
+                          <Crown className="h-3 w-3 mr-1 text-yellow-500" />
+                          Host
+                        </>
+                      ) : (
+                        'Cliente'
+                      )}
+                    </span>
+                  </div>
+                </Link>
+              </div>
+            ) : (
+              <button 
+                onClick={() => navigate('/auth')}
+                className="flex items-center space-x-2 p-2 hover:bg-primary-50 rounded-lg transition-colors"
+                title="Login"
+              >
+                <User className="h-6 w-6 text-primary-700" />
+                <span className="hidden md:block text-sm font-medium text-primary-700">
+                  Login
+                </span>
+              </button>
+            )}
+            <button 
+              onClick={() => setIsCartOpen(true)}
+              className="p-2 hover:bg-primary-50 rounded-lg transition-colors relative"
+              title="Carrello"
+            >
               <ShoppingCart className="h-6 w-6 text-primary-700" />
-              <span className="absolute -top-1 -right-1 bg-accent-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                0
-              </span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-accent-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {cartCount > 99 ? '99+' : cartCount}
+                </span>
+              )}
             </button>
             <button
               className="md:hidden p-2 hover:bg-primary-50 rounded-lg transition-colors"
@@ -60,8 +106,8 @@ export function Header() {
         </div>
 
         {/* Navigation */}
-        <nav className="hidden md:flex border-t border-primary-100">
-          <div className="flex space-x-8">
+        <nav className="hidden md:flex border-t border-primary-100 w-full">
+          <div className="flex space-x-8 w-full justify-center">
             {categories.map((category) => (
               <div
                 key={category.id}
@@ -94,7 +140,7 @@ export function Header() {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden border-t border-primary-100 py-4">
+          <div className="md:hidden border-t border-primary-100 py-4 w-full">
             <div className="space-y-4">
               {categories.map((category) => (
                 <div key={category.id}>
@@ -126,6 +172,8 @@ export function Header() {
           </div>
         )}
       </div>
+      
+      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </header>
   );
 }
