@@ -6,8 +6,8 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
 
 const signInSchema = z.object({
-  email: z.string().email('Email non valida'),
-  password: z.string().min(6, 'La password deve avere almeno 6 caratteri')
+  email: z.string().email('Invalid email'),
+  password: z.string().min(6, 'Password must be at least 6 characters')
 })
 
 type SignInFormData = z.infer<typeof signInSchema>
@@ -33,7 +33,7 @@ export function SignInForm() {
     const { error } = await signIn(data.email, data.password)
     
     if (error) {
-      setError(error.message || 'Errore durante il login')
+      setError(error.message || 'Error during login')
     } else {
       // Login successful - redirect to profile
       setTimeout(() => {
@@ -56,7 +56,7 @@ export function SignInForm() {
             type="email"
             id="email"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="la tua@email.com"
+            placeholder="your@email.com"
           />
           {errors.email && (
             <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
@@ -87,7 +87,7 @@ export function SignInForm() {
 
         {loading && (
           <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg">
-            Accesso in corso... Verrai reindirizzato automaticamente.
+            Signing in... You will be redirected automatically.
           </div>
         )}
 
@@ -96,7 +96,7 @@ export function SignInForm() {
           disabled={loading}
           className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {loading ? 'Accesso in corso...' : 'Accedi'}
+          {loading ? 'Signing in...' : 'Sign In'}
         </button>
       </form>
     </div>

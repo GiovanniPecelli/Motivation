@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase } from '../lib/supabaseClient'
 import { User, Session } from '@supabase/supabase-js'
 
 interface Profile {
@@ -138,26 +138,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('Profile found:', data)
         setProfile(data)
       } else {
-        console.log('No profile found, creating new one...')
-        
-        // Create profile if it doesn't exist
-        const { data: newProfile, error: insertError } = await supabase
-          .from('profiles')
-          .insert({
-            id: userId,
-            email: user?.email || '',
-            full_name: user?.user_metadata?.full_name || null,
-            role: 'customer'
-          })
-          .select()
-          .single()
-
-        if (insertError) {
-          console.error('Error creating profile:', insertError)
-        } else {
-          console.log('Profile created successfully:', newProfile)
-          setProfile(newProfile)
-        }
+        // We expect the trigger to handle this, but if it takes a moment
+        // we just log it. The session listener will retry as needed.
+        console.log('Profile not ready yet, waiting for trigger...')
       }
     } catch (error) {
       console.error('Error in fetchProfile:', error)
@@ -183,51 +166,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Sign up error:', error)
-        return { error }
+        return { error: error.message }
       }
 
-      console.log('Sign up data:', data)
-
       if (data.user && !data.session) {
-        console.log('User created but no session, trying to sign in...')
-        
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        })
-        
-        if (signInError) {
-          console.error('Sign in error:', signInError)
-          return { error: 'Registration successful! Please check your email for confirmation.' }
-        }
-        
-        console.log('Sign in successful, creating profile...')
-        
-        // If sign in successful, create profile with full_name
-        if (data.user) {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert({
-              id: data.user.id,
-              email: data.user.email || '',
-              full_name: fullName,
-              role: 'customer'
-            })
-          
-          if (profileError) {
-            console.error('Error creating profile with full_name:', profileError)
-          } else {
-            console.log('Profile created successfully during signup')
-          }
-        }
-        
-        return { success: true, error: null }
+        return { error: 'Registration successful! Please check your email for confirmation.' }
       }
 
       return { success: true, error: null }
     } catch (error) {
       console.error('Sign up exception:', error)
-      return { error }
+      return { error: 'An error occurred during registration.' }
     }
   }
 

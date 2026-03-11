@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ShoppingCart, Truck, Shield, RotateCcw, Plus, Minus } from 'lucide-react'
+import { ShoppingCart, Plus, Minus } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
+import { useCart } from '../contexts/CartContext'
+import { useNotification } from '../contexts/NotificationContext'
 
 interface Product {
   id: string
@@ -29,7 +31,7 @@ interface ProductVariant {
 
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>()
-  const { profile } = useAuth()
+  const {  } = useAuth()
   
   const [product, setProduct] = useState<Product | null>(null)
   const [variants, setVariants] = useState<ProductVariant[]>([])
@@ -106,22 +108,22 @@ export function ProductDetail() {
     return selectedVariant?.images || []
   }
 
+  const { addToCart } = useCart()
+  const { showNotification } = useNotification()
   const handleAddToCart = async () => {
     if (!selectedVariant || !product || getCurrentStock() <= 0) return
     
     setIsAddingToCart(true)
     try {
-      // Simplified add to cart
-      console.log('Adding to cart:', {
-        product_id: product.id,
-        variant_id: selectedVariant.id,
-        quantity,
-        size: selectedSize,
-        color: selectedVariant.color
-      })
-      alert('Aggiunto al carrello! (funzionalità in sviluppo)')
+      const { error } = await addToCart(product.id, selectedVariant.id, selectedSize, quantity)
+      if (error) {
+        showNotification('Error adding to cart: ' + (error.message || error), 'error')
+      } else {
+        showNotification('Added to cart!', 'success')
+      }
     } catch (error) {
       console.error('Error adding to cart:', error)
+      showNotification('Error adding to cart', 'error')
     } finally {
       setIsAddingToCart(false)
     }
@@ -139,9 +141,9 @@ export function ProductDetail() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Prodotto non trovato</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Product not found</h1>
           <Link to="/products" className="text-blue-600 hover:text-blue-800">
-            Torna ai prodotti
+            Back to products
           </Link>
         </div>
       </div>
@@ -160,7 +162,7 @@ export function ProductDetail() {
           <nav className="flex items-center space-x-2 text-sm">
             <Link to="/" className="text-gray-500 hover:text-gray-700">Home</Link>
             <span className="text-gray-400">/</span>
-            <Link to="/products" className="text-gray-500 hover:text-gray-700">Prodotti</Link>
+            <Link to="/products" className="text-gray-500 hover:text-gray-700">Products</Link>
             <span className="text-gray-400">/</span>
             <span className="text-gray-900">{product.title}</span>
           </nav>
@@ -183,7 +185,7 @@ export function ProductDetail() {
                 <div className="w-full h-full flex items-center justify-center bg-gray-100">
                   <div className="text-center">
                     <div className="w-24 h-24 bg-gray-200 rounded-lg mx-auto mb-4"></div>
-                    <p className="text-gray-500">Nessuna immagine disponibile</p>
+                    <p className="text-gray-500">No image available</p>
                   </div>
                 </div>
               )}
@@ -224,7 +226,7 @@ export function ProductDetail() {
                 </span>
                 <div className="flex items-center text-sm text-gray-500">
                   <span className={`w-2 h-2 rounded-full mr-2 ${totalStock > 0 ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                  {totalStock > 0 ? 'Disponibile' : 'Non disponibile'}
+                  {totalStock > 0 ? 'Available' : 'Out of Stock'}
                 </div>
               </div>
             </div>
@@ -244,7 +246,7 @@ export function ProductDetail() {
             {/* Color Selection */}
             {variants.length > 0 && (
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-3">Colore</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-3">Color</h3>
                 <div className="flex flex-wrap gap-3">
                   {variants.map(variant => {
                     const variantTotalStock = variant.stock_s + variant.stock_m + variant.stock_l + variant.stock_xl
@@ -268,7 +270,7 @@ export function ProductDetail() {
                         ></div>
                         <span className="text-sm font-medium">{variant.color}</span>
                         {variantTotalStock <= 0 && (
-                          <span className="text-xs text-red-600">(Esaurito)</span>
+                          <span className="text-xs text-red-600">(Out of stock)</span>
                         )}
                       </button>
                     )
@@ -280,7 +282,7 @@ export function ProductDetail() {
             {/* Size Selection */}
             {selectedVariant && (
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-3">Taglia</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-3">Size</h3>
                 <div className="flex flex-wrap gap-3">
                   {sizes.map(size => {
                     const sizeStock = getStockForSize(selectedVariant, size)
@@ -297,14 +299,14 @@ export function ProductDetail() {
                       >
                         <span className="text-sm font-medium">{size}</span>
                         {sizeStock <= 0 && (
-                          <span className="text-xs text-red-600 block">Esaurito</span>
+                          <span className="text-xs text-red-600 block">Out of stock</span>
                         )}
                       </button>
                     )
                   })}
                 </div>
                 <p className="mt-2 text-sm text-gray-600">
-                  Disponibilità taglia {selectedSize}: {currentStock} pezzi
+                  Size {selectedSize} availability: {currentStock} items
                 </p>
               </div>
             )}
@@ -312,7 +314,7 @@ export function ProductDetail() {
             {/* Quantity */}
             {selectedVariant && currentStock > 0 && (
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-3">Quantità</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-3">Quantity</h3>
                 <div className="flex items-center space-x-3">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -344,23 +346,8 @@ export function ProductDetail() {
                 ) : (
                   <ShoppingCart className="h-5 w-5 mr-2" />
                 )}
-                {currentStock <= 0 ? 'Non Disponibile' : 'Aggiungi al Carrello'}
+                {currentStock <= 0 ? 'Out of Stock' : 'Add to Cart'}
               </button>
-
-              <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
-                <div className="flex items-center space-x-1">
-                  <Truck className="h-4 w-4" />
-                  <span>Spedizione gratuita</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <RotateCcw className="h-4 w-4" />
-                  <span>Resi gratuiti</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Shield className="h-4 w-4" />
-                  <span>Garanzia 2 anni</span>
-                </div>
-              </div>
             </div>
 
             {/* Tags */}

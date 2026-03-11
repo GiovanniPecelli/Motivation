@@ -10,12 +10,12 @@ export function AuthPage() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            {isSignIn ? 'Accedi al tuo account' : 'Crea il tuo account'}
+            {isSignIn ? 'Sign in to your account' : 'Create your account'}
           </h2>
           <p className="text-gray-600">
             {isSignIn 
-              ? 'Inserisci le tue credenziali per accedere' 
-              : 'Compila il modulo per registrarti'
+              ? 'Enter your credentials to access' 
+              : 'Fill out the form to register'
             }
           </p>
         </div>
@@ -31,7 +31,7 @@ export function AuthPage() {
                 <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Oppure</span>
+                <span className="px-2 bg-white text-gray-500">Or</span>
               </div>
             </div>
 
@@ -41,8 +41,8 @@ export function AuthPage() {
                 className="text-blue-600 hover:text-blue-500 font-medium"
               >
                 {isSignIn 
-                  ? 'Non hai un account? Registrati' 
-                  : 'Hai già un account? Accedi'
+                  ? "Don't have an account? Sign up" 
+                  : "Already have an account? Sign in"
                 }
               </button>
             </div>

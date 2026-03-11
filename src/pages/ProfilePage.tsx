@@ -40,9 +40,9 @@ export function ProfilePage() {
     })
     
     if (error) {
-      setUpdateError(error.message || 'Errore durante l\'aggiornamento')
+      setUpdateError(error.message || 'Error during update')
     } else {
-      setUpdateSuccess('Profilo aggiornato con successo!')
+      setUpdateSuccess('Profile updated successfully!')
       setIsEditing(false)
     }
   }
@@ -64,8 +64,8 @@ export function ProfilePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Il Mio Profilo</h1>
-              <p className="text-gray-600">Gestisci il tuo account</p>
+              <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
+              <p className="text-gray-600">Manage your account</p>
             </div>
             <button
               onClick={signOut}
@@ -89,18 +89,18 @@ export function ProfilePage() {
                   <User className="h-10 w-10 text-gray-400" />
                 </div>
                 <h2 className="text-xl font-semibold text-gray-900">
-                  {profile.full_name || 'Cliente'}
+                  {profile.full_name || 'Customer'}
                 </h2>
                 <p className="text-gray-600">{profile.email}</p>
                 <p className="text-sm text-gray-500 mt-1">
-                  Registrato dal {new Date(profile.created_at).toLocaleDateString('it-IT')}
+                  Registered since {new Date(profile.created_at).toLocaleDateString('it-IT')}
                 </p>
               </div>
 
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Nome</span>
+                    <span className="text-sm text-gray-600">Name</span>
                     <div className="flex items-center space-x-2">
                       <span className="text-sm font-medium text-gray-900">
                         {isEditing ? (
@@ -109,17 +109,17 @@ export function ProfilePage() {
                             value={editForm.full_name}
                             onChange={(e) => setEditForm({...editForm, full_name: e.target.value})}
                             className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-500"
-                            placeholder="Inserisci nome"
+                            placeholder="Enter name"
                           />
                         ) : (
-                          profile.full_name || 'Non specificato'
+                          profile.full_name || 'Not specified'
                         )}
                       </span>
                       {!isEditing && (
                         <button
                           onClick={handleEditClick}
                           className="text-blue-600 hover:text-blue-700"
-                          title="Modifica"
+                          title="Edit"
                         >
                           <Edit2 className="h-4 w-4" />
                         </button>
@@ -136,7 +136,7 @@ export function ProfilePage() {
                             value={editForm.email}
                             onChange={(e) => setEditForm({...editForm, email: e.target.value})}
                             className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-500"
-                            placeholder="Inserisci email"
+                            placeholder="Enter email"
                           />
                         ) : (
                           profile.email
@@ -145,20 +145,20 @@ export function ProfilePage() {
                     </div>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Ruolo</span>
+                    <span className="text-sm text-gray-600">Role</span>
                     <span className="text-sm font-medium text-gray-900">
-                      {profile.role === 'host' ? 'Host' : 'Cliente'}
+                      {profile.role === 'host' ? 'Host' : 'Customer'}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Cliente dal</span>
+                    <span className="text-sm text-gray-600">Customer since</span>
                     <span className="text-sm font-medium text-gray-900">
                       {new Date(profile.created_at).toLocaleDateString('it-IT')}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Stato</span>
-                    <span className="text-sm font-medium text-green-600">Attivo</span>
+                    <span className="text-sm text-gray-600">Status</span>
+                    <span className="text-sm font-medium text-green-600">Active</span>
                   </div>
                 </div>
 
@@ -169,14 +169,14 @@ export function ProfilePage() {
                       className="flex items-center px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50"
                     >
                       <X className="h-4 w-4 mr-1" />
-                      Annulla
+                      Cancel
                     </button>
                     <button
                       onClick={handleSaveClick}
                       className="flex items-center px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
                     >
                       <Save className="h-4 w-4 mr-1" />
-                      Salva
+                      Save
                     </button>
                   </div>
                 )}
@@ -206,8 +206,8 @@ export function ProfilePage() {
                     <ShoppingBag className="h-6 w-6 text-blue-600" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Carrello</p>
-                    <p className="text-2xl font-bold text-gray-900">{cartCount} articoli</p>
+                    <p className="text-sm font-medium text-gray-600">Cart</p>
+                    <p className="text-2xl font-bold text-gray-900">{cartCount} items</p>
                     <p className="text-sm text-gray-500">€{cartTotal.toFixed(2)}</p>
                   </div>
                 </div>
@@ -219,9 +219,9 @@ export function ProfilePage() {
                     <User className="h-6 w-6 text-green-600" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Ordini</p>
+                    <p className="text-sm font-medium text-gray-600">Orders</p>
                     <p className="text-2xl font-bold text-gray-900">0</p>
-                    <p className="text-sm text-gray-500">Storico acquisti</p>
+                    <p className="text-sm text-gray-500">Purchase history</p>
                   </div>
                 </div>
               </div>
@@ -229,30 +229,30 @@ export function ProfilePage() {
 
             {/* Quick Actions */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Azioni Rapide</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Link
                   to="/products"
                   className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
                 >
                   <ShoppingBag className="h-5 w-5 text-gray-400 mr-3" />
-                  <span className="text-sm font-medium text-gray-900">Visualizza Carrello</span>
+                  <span className="text-sm font-medium text-gray-900">View Cart</span>
                 </Link>
                 <button className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
                   <Settings className="h-5 w-5 text-gray-400 mr-3" />
-                  <span className="text-sm font-medium text-gray-900">Impostazioni</span>
+                  <span className="text-sm font-medium text-gray-900">Settings</span>
                 </button>
               </div>
             </div>
 
             {/* Recent Activity */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Attività Recente</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Activity</h3>
               <div className="text-center py-8">
                 <User className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">Nessuna attività recente</p>
+                <p className="text-gray-500">No recent activity</p>
                 <p className="text-sm text-gray-400 mt-2">
-                  Inizia ad aggiungere prodotti per vedere qui le statistiche
+                  Start adding products to see stats here
                 </p>
               </div>
             </div>

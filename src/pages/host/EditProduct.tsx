@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useSimpleRole } from '../../contexts/SimpleRoleContext'
 import { Plus, Trash2, Upload, Crown, ArrowLeft, ChevronUp, ChevronDown } from 'lucide-react'
-import { Link, useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 
 interface Variant {
@@ -38,6 +38,7 @@ export function EditProduct() {
   const [description, setDescription] = useState('')
   const [price, setPrice] = useState('')
   const [category, setCategory] = useState('')
+  const [collection, setCollection] = useState('')
   const [tags, setTags] = useState('')
   const [variants, setVariants] = useState<Variant[]>([])
   const [originalVariants, setOriginalVariants] = useState<Variant[]>([])
@@ -46,12 +47,32 @@ export function EditProduct() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [message, setMessage] = useState('')
+  const [collections, setCollections] = useState<any[]>([])
 
   useEffect(() => {
     if (id && profile && isHost) {
       loadProduct()
+      fetchCollections()
     }
   }, [id, profile, isHost])
+
+  const fetchCollections = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('collections')
+        .select('id, name, description')
+        .order('display_order', { ascending: true })
+        .order('name', { ascending: true })
+
+      if (error) {
+        console.error('Error fetching collections:', error)
+      } else {
+        setCollections(data || [])
+      }
+    } catch (error) {
+      console.error('Error:', error)
+    }
+  }
 
   const loadProduct = async () => {
     try {
@@ -65,13 +86,14 @@ export function EditProduct() {
         .single()
 
       if (productError) throw productError
-      if (!product) throw new Error('Prodotto non trovato')
+      if (!product) throw new Error('Product not found')
 
       // Set product data
       setTitle(product.title)
       setDescription(product.description || '')
       setPrice(product.price.toString())
       setCategory(product.category)
+      setCollection(product.collection || '')
       setTags(product.tags?.join(', ') || '')
 
       // Load variants
@@ -202,7 +224,7 @@ export function EditProduct() {
 
     try {
       if (!title || !price || !category) {
-        throw new Error('Compila nome, prezzo e categoria')
+        throw new Error('Please fill name, price and category')
       }
 
       // Update product
@@ -213,6 +235,7 @@ export function EditProduct() {
           description,
           price: parseFloat(price),
           category,
+          collection: collection || null,
           tags: tags.split(',').map(t => t.trim()).filter(t => t)
         })
         .eq('id', id)
@@ -267,7 +290,7 @@ export function EditProduct() {
         }
       }
 
-      setMessage('Prodotto aggiornato con successo!')
+      setMessage('Product updated successfully!')
       
       // Auto-navigate after 1.5 seconds
       setTimeout(() => {
@@ -277,7 +300,7 @@ export function EditProduct() {
       setOriginalVariants([...variants])
       
     } catch (err: any) {
-      setMessage(err.message || 'Errore durante il salvataggio')
+      setMessage(err.message || 'Error during saving')
     } finally {
       setIsSubmitting(false)
     }
@@ -290,19 +313,19 @@ export function EditProduct() {
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Crown className="h-6 w-6 text-yellow-600" />
-            <h1 className="text-2xl font-bold text-gray-900">Modifica Prodotto</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Edit Product</h1>
           </div>
           <button 
             onClick={() => navigate('/host/products')}
             className="flex items-center text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Indietro
+            Back
           </button>
         </div>
 
         {message && (
-          <div className={`mb-4 p-3 rounded-lg ${message.includes('successo') || message.includes('caricate') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+          <div className={`mb-4 p-3 rounded-lg ${message.includes('success') || message.includes('uploaded') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
             {message}
           </div>
         )}
@@ -310,24 +333,24 @@ export function EditProduct() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Info Base */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Info Prodotto</h2>
+            <h2 className="text-lg font-semibold mb-4">Product Info</h2>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nome *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-                  placeholder="es: T-shirt Motivation Logo"
+                  placeholder="eg: T-shirt Motivation Logo"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Prezzo (€) *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Price (€) *</label>
                   <input
                     type="number"
                     value={price}
@@ -341,58 +364,75 @@ export function EditProduct() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Categoria *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
                     required
                   >
-                    <option value="">Seleziona</option>
+                    <option value="">Select</option>
                     <option value="t-shirts">T-Shirt</option>
-                    <option value="hoodies">Felpe</option>
-                    <option value="pants">Pantaloni</option>
-                    <option value="accessories">Accessori</option>
+                    <option value="hoodies">Hoodies</option>
+                    <option value="pants">Pants</option>
+                    <option value="accessories">Accessories</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Descrizione</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-                  placeholder="Descrivi il prodotto..."
+                  placeholder="Describe the product..."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tag (separati da virgola)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tags (comma separated)</label>
                 <input
                   type="text"
                   value={tags}
                   onChange={(e) => setTags(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-                  placeholder="es: t-shirt, estate, fitness, cotone"
+                  placeholder="eg: t-shirt, summer, fitness, cotton"
                 />
-                <p className="text-xs text-gray-500 mt-1">Aggiungi tag per aiutare la ricerca del prodotto</p>
+                <p className="text-xs text-gray-500 mt-1">Add tags to help product search</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Collection</label>
+                <select
+                  value={collection}
+                  onChange={(e) => setCollection(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                >
+                  <option value="">No collection</option>
+                  {collections.map((coll: any) => (
+                    <option key={coll.id} value={coll.name}>
+                      {coll.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">Add product to an existing collection</p>
               </div>
             </div>
           </div>
 
-          {/* Varianti */}
+          {/* Variants */}
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold">Colori Disponibili</h2>
+              <h2 className="text-lg font-semibold">Available Colors</h2>
               <button
                 type="button"
                 onClick={addVariant}
                 className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
               >
                 <Plus className="h-4 w-4 mr-1" />
-                Aggiungi Colore
+                Add Color
               </button>
             </div>
 
@@ -415,7 +455,7 @@ export function EditProduct() {
                         }}
                         className="px-2 py-1 border border-gray-300 rounded text-sm"
                       >
-                        <option value="">Seleziona colore</option>
+                        <option value="">Select color</option>
                         {colors.map(c => (
                           <option key={c.hex} value={c.name}>{c.name}</option>
                         ))}
@@ -430,7 +470,7 @@ export function EditProduct() {
 
                   {/* Stock */}
                   <div className="mb-3">
-                    <label className="block text-xs text-gray-600 mb-2">Quantità per taglia:</label>
+                    <label className="block text-xs text-gray-600 mb-2">Quantity per size:</label>
                     <div className="grid grid-cols-4 gap-2">
                       {[
                         { key: 'stockS', label: 'S' },

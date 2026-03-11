@@ -12,6 +12,7 @@ export interface Product {
   inStock: boolean;
   isNew?: boolean;
   isSale?: boolean;
+  is_featured?: boolean;
   rating?: number;
   reviews?: number;
 }

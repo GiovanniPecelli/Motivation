@@ -42,17 +42,22 @@ export function SignUpForm() {
     const result = await signUp(data.email, data.password, data.fullName)
     
     if (result.error) {
-      setError(result.error)
+      if (result.error.includes('Registration successful')) {
+        setSuccess(true)
+        setMessage(result.error)
+      } else {
+        setError(result.error)
+      }
     } else if (result.success) {
       setSuccess(true)
-      setMessage('Registrazione completata con successo! Verrai reindirizzato al tuo profilo.')
+      setMessage('Registration completed successfully! Redirecting to your profile.')
       // Redirect to profile after successful registration
       setTimeout(() => {
         navigate('/profile')
       }, 2000)
     } else {
       setSuccess(true)
-      setMessage('Registrazione completata! Controlla la tua email per confermare.')
+      setMessage('Registration completed! Please check your email to confirm.')
     }
     
     setLoading(false)
@@ -62,14 +67,14 @@ export function SignUpForm() {
     return (
       <div className="w-full max-w-md mx-auto text-center">
         <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4">
-          <h3 className="font-semibold mb-2">✅ Registrazione Completata!</h3>
+          <h3 className="font-semibold mb-2">✅ Registration Completed!</h3>
           <p className="text-sm">{message}</p>
         </div>
         <button
           onClick={() => navigate('/profile')}
           className="text-blue-600 hover:text-blue-500 font-medium"
         >
-          Vai al profilo
+          Go to profile
         </button>
       </div>
     )
@@ -153,7 +158,7 @@ export function SignUpForm() {
           disabled={loading}
           className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {loading ? 'Registrazione in corso...' : 'Registrati'}
+          {loading ? 'Registering...' : 'Register'}
         </button>
       </form>
     </div>

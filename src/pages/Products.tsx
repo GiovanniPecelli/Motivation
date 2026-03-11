@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ProductCard } from '../components/ProductCard';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, Package } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 interface Variant {
@@ -26,9 +26,14 @@ interface Product {
 }
 
 interface Collection {
+  id: string;
   name: string;
-  description: string;
+  description?: string;
+  image_url?: string;
+  banner_url?: string;
   product_count: number;
+  display_order: number;
+  created_at: string;
 }
 
 export function Products() {
@@ -91,6 +96,20 @@ export function Products() {
       setProducts(productsWithVariants);
       console.log('Final products with variants:', productsWithVariants);
       
+      // Fetch collections separately
+      const { data: collectionsData, error: collectionsError } = await supabase
+        .from('collections')
+        .select('*')
+        .order('display_order', { ascending: true })
+        .order('created_at', { ascending: false });
+
+      if (collectionsError) {
+        console.error('Collections error:', collectionsError);
+      } else {
+        console.log('Collections data:', collectionsData);
+        setCollections(collectionsData || []);
+      }
+      
       // Extract available tags and colors
       const allTags = new Set<string>();
       const allColors = new Set<string>();
@@ -99,18 +118,37 @@ export function Products() {
       productsWithVariants.forEach(product => {
         console.log('Processing product:', product.title, product);
         
+        // Add hardcoded tags based on product title
+        if (product.title.includes('Original Motivation')) {
+          allTags.add('fitness');
+          allTags.add('sport');
+        } else if (product.title.includes('Motivation Pro')) {
+          allTags.add('premium');
+          allTags.add('professional');
+        } else if (product.title.includes('Motivation Sport')) {
+          allTags.add('workout');
+          allTags.add('athletic');
+        }
+        
         // Count collections
         if (product.collection) {
           collectionsMap.set(product.collection, (collectionsMap.get(product.collection) || 0) + 1);
         }
         
-        // Extract tags
+        // Extract tags from database if available
         product.tags?.forEach((tag: string) => allTags.add(tag));
         
         // Extract colors from variants
         product.variants?.forEach((variant: Variant) => {
-          allColors.add(variant.color);
+          console.log('Found variant color:', variant.color);
+          // Only add colors that are not empty, null, or undefined
+          if (variant.color && variant.color.trim() !== '') {
+            allColors.add(variant.color.trim());
+          }
         });
+        
+        // Debug: Show all variants for this product
+        console.log(`All variants for ${product.title}:`, product.variants);
       });
 
       console.log('Available tags:', Array.from(allTags));
@@ -119,14 +157,6 @@ export function Products() {
 
       setAvailableTags(Array.from(allTags).sort());
       setAvailableColors(Array.from(allColors).sort());
-      
-      // Convert collections map to array
-      const collectionsArray = Array.from(collectionsMap.entries()).map(([name, count]) => ({
-        name,
-        description: `Scopri la collezione ${name}`,
-        product_count: count
-      }));
-      setCollections(collectionsArray);
       
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -189,6 +219,7 @@ export function Products() {
       'Nero': '#000000',
       'Bianco': '#FFFFFF',
       'Grigio': '#808080',
+      'Grigia': '#808080',
       'Blu': '#0000FF',
       'Rosso': '#FF0000',
       'Verde': '#008000',
@@ -211,13 +242,43 @@ export function Products() {
       'Purple': '#800080',
       'Pink': '#FFC0CB',
       'Brown': '#8B4513',
-      // Common variations
+      // Common variations and abbreviations
       'Nera': '#000000',
       'Bianca': '#FFFFFF',
-      'Grigia': '#808080',
+      'WHITE': '#FFFFFF',
+      'BLACK': '#000000',
+      'white': '#FFFFFF',
+      'black': '#000000',
+      'gray': '#808080',
+      'grey': '#808080',
+      'blue': '#0000FF',
+      'red': '#FF0000',
+      'green': '#008000',
+      'yellow': '#FFFF00',
+      'orange': '#FFA500',
+      'purple': '#800080',
+      'pink': '#FFC0CB',
+      'brown': '#8B4513',
+      'beige': '#F5F5DC',
+      // Additional common colors
+      'Silver': '#C0C0C0',
+      'Gold': '#FFD700',
+      'Navy': '#000080',
+      'Teal': '#008080',
+      'Lime': '#00FF00',
+      'Cyan': '#00FFFF',
+      'Magenta': '#FF00FF',
+      'Olive': '#808000',
+      'Maroon': '#800000',
+      'Aqua': '#00FFFF',
+      'Fuchsia': '#FF00FF',
     };
     return colorMap[colorName] || '#CCCCCC';
   };
+
+  // Get featured collections (first 3)
+  const featuredCollections = collections.slice(0, 3);
+  const otherCollections = collections.slice(3);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -262,11 +323,69 @@ export function Products() {
           </div>
         </div>
 
+        {/* Featured Collections */}
+        {featuredCollections.length > 0 && (
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+              Featured Collections
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              {featuredCollections.map((collection) => (
+                <div 
+                  key={collection.id}
+                  className="relative group cursor-pointer"
+                  onClick={() => setSelectedCollection(collection.name)}
+                >
+                  {/* Banner Image */}
+                  <div className="relative h-48 rounded-lg overflow-hidden mb-4">
+                    {collection.banner_url ? (
+                      <img 
+                        src={collection.banner_url} 
+                        alt={collection.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center">
+                        <Package className="h-12 w-12 text-white opacity-50" />
+                      </div>
+                    )}
+                    
+                    {/* Overlay with collection name */}
+                    <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                      <div className="text-center text-white">
+                        <h3 className="text-xl font-bold mb-2">{collection.name}</h3>
+                        <p className="text-sm opacity-90">{collection.product_count} products</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Collection Info */}
+                  <div className="text-center">
+                    <p className="text-gray-600 text-sm mb-2">
+                      {collection.description}
+                    </p>
+                    <button
+                      className={`inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        selectedCollection === collection.name
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      <Package className="h-4 w-4 mr-2" />
+                      {selectedCollection === collection.name ? 'Selected' : 'Discover'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Collections */}
+          {/* Collections Sidebar */}
           <aside className="lg:w-64 flex-shrink-0">
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Collezioni</h3>
+              <h3 className="font-semibold text-gray-900 mb-4">Collections</h3>
               <div className="space-y-2">
                 <button
                   onClick={() => setSelectedCollection('')}
@@ -276,14 +395,14 @@ export function Products() {
                       : 'hover:bg-gray-100'
                   }`}
                 >
-                  Tutti i prodotti
+                  All products
                   <span className="block text-xs opacity-75 mt-1">
-                    {products.length} prodotti
+                    {products.length} products
                   </span>
                 </button>
-                {collections.map((collection) => (
+                {otherCollections.map((collection) => (
                   <button
-                    key={collection.name}
+                    key={collection.id}
                     onClick={() => setSelectedCollection(collection.name)}
                     className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
                       selectedCollection === collection.name 
@@ -293,7 +412,7 @@ export function Products() {
                   >
                     {collection.name}
                     <span className="block text-xs opacity-75 mt-1">
-                      {collection.product_count} prodotti
+                      {collection.product_count} products
                     </span>
                   </button>
                 ))}
@@ -313,7 +432,6 @@ export function Products() {
                   </button>
                 )}
               </div>
-
               {/* Tags Filter */}
               {availableTags.length > 0 && (
                 <div className="mb-6">
@@ -337,9 +455,9 @@ export function Products() {
               {/* Colors Filter */}
               {availableColors.length > 0 && (
                 <div className="mb-6">
-                  <h4 className="font-medium text-gray-900 mb-3">Colori</h4>
+                  <h4 className="font-medium text-gray-900 mb-3">Colors</h4>
                   <div className="space-y-2">
-                    {availableColors.map((color) => (
+                    {availableColors.filter(color => color && color.trim() !== '').map((color) => (
                       <label key={color} className="flex items-center cursor-pointer">
                         <input
                           type="checkbox"
@@ -360,18 +478,19 @@ export function Products() {
             </div>
           </aside>
 
+
           {/* Products Grid */}
           <div className="flex-1">
             {/* Results Header */}
             <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
               <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div className="text-sm text-gray-600">
-                  {loading ? 'Caricamento...' : (
+                  {loading ? 'Loading...' : (
                     <>
-                      {filteredProducts.length} prodotti
-                      {searchQuery && ` per "${searchQuery}"`}
+                      {filteredProducts.length} products
+                      {searchQuery && ` for "${searchQuery}"`}
                       {selectedCollection && ` in ${selectedCollection}`}
-                      {selectedTags.length > 0 && ` con ${selectedTags.join(', ')}`}
+                      {selectedTags.length > 0 && ` with ${selectedTags.join(', ')}`}
                       {selectedColors.length > 0 && ` in ${selectedColors.join(', ')}`}
                     </>
                   )}
@@ -384,16 +503,16 @@ export function Products() {
               <div className="text-center py-12">
                 <Search className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Nessun prodotto trovato
+                  No products found
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  I filtri selezionati non corrispondono a nessun prodotto.
+                  The selected filters do not match any products.
                 </p>
                 <button
                   onClick={clearFilters}
                   className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                 >
-                  Cancella tutti i filtri
+                  Clear all filters
                 </button>
               </div>
             )}
@@ -402,7 +521,7 @@ export function Products() {
             {loading && (
               <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-600">Caricamento prodotti...</p>
+                <p className="text-gray-600">Loading products...</p>
               </div>
             )}
 

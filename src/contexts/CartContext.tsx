@@ -7,6 +7,7 @@ export interface CartItem {
   user_id: string
   product_id: string
   variant_id?: string
+  size: string
   quantity: number
   created_at: string
   updated_at: string
@@ -14,24 +15,22 @@ export interface CartItem {
     id: string
     title: string
     price: number
-    images: string[]
     category: string
   }
   product_variants?: {
     id: string
-    size: string
     color: string
     color_hex: string
-    supply: number
+    images: string[]
   }
 }
 
 interface CartContextType {
   cartItems: CartItem[]
   loading: boolean
-  addToCart: (productId: string, quantity: number) => Promise<{ error: any }>
-  removeFromCart: (productId: string) => Promise<{ error: any }>
-  updateQuantity: (productId: string, quantity: number) => Promise<{ error: any }>
+  addToCart: (productId: string, variantId: string, size: string, quantity: number) => Promise<{ error: any }>
+  removeFromCart: (cartItemId: string) => Promise<{ error: any }>
+  updateQuantity: (cartItemId: string, quantity: number) => Promise<{ error: any }>
   clearCart: () => Promise<{ error: any }>
   cartTotal: number
   cartCount: number
@@ -89,7 +88,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const addToCart = async (productId: string, quantity: number) => {
+  const addToCart = async (productId: string, variantId: string, size: string, quantity: number) => {
     try {
       if (!profile) return { error: 'User not authenticated' }
 
@@ -108,8 +107,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return { error: 'Product is not available' }
       }
 
-      // Check if item already in cart
-      const existingItem = cartItems.find(item => item.product_id === productId)
+      // Check if item already in cart with same variant and size
+      const existingItem = cartItems.find(item => 
+        item.product_id === productId && item.variant_id === variantId && item.size === size
+      )
 
       if (existingItem) {
         // Update quantity
@@ -130,6 +131,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           .insert({
             user_id: profile.id,
             product_id: productId,
+            variant_id: variantId,
+            size,
             quantity
           })
 
@@ -144,7 +147,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const removeFromCart = async (productId: string) => {
+  const removeFromCart = async (cartItemId: string) => {
     try {
       if (!profile) return { error: 'User not authenticated' }
 
@@ -152,7 +155,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         .from('cart_items')
         .delete()
         .eq('user_id', profile.id)
-        .eq('product_id', productId)
+        .eq('id', cartItemId)
 
       if (error) return { error }
 
@@ -163,7 +166,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const updateQuantity = async (productId: string, quantity: number) => {
+  const updateQuantity = async (cartItemId: string, quantity: number) => {
     try {
       if (!profile) return { error: 'User not authenticated' }
       if (quantity <= 0) return { error: 'Quantity must be greater than 0' }
@@ -172,7 +175,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         .from('cart_items')
         .update({ quantity })
         .eq('user_id', profile.id)
-        .eq('product_id', productId)
+        .eq('id', cartItemId)
 
       if (error) return { error }
 

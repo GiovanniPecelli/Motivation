@@ -67,12 +67,6 @@ export function UsersManagement() {
               <Crown className="h-6 w-6 text-yellow-600" />
               <h1 className="text-2xl font-bold text-gray-900">Gestione Utenti</h1>
             </div>
-            <Link
-              to="/host/dashboard"
-              className="text-gray-600 hover:text-gray-900"
-            >
-              ← Dashboard
-            </Link>
           </div>
         </div>
       </div>

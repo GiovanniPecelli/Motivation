@@ -1,28 +1,16 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Menu, X, User, Crown, ChevronDown, ShoppingBag, Users } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
 import logoRemoveBg from '../assets/logo-removebg-preview.png';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { useSimpleRole } from '../contexts/SimpleRoleContext';
 import { CartDrawer } from './Cart/CartDrawer';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-const supabase = createClient(supabaseUrl, supabaseKey)
-
-interface DynamicCategory {
-  name: string
-  slug: string
-  count: number
-}
-
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false)
-  const [dynamicCategories, setDynamicCategories] = useState<DynamicCategory[]>([])
   const adminPanelRef = useRef<HTMLDivElement>(null)
   const { profile } = useAuth()
   const { cartCount } = useCart()
@@ -42,55 +30,6 @@ export function Header() {
       return () => document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [isAdminPanelOpen])
-
-  useEffect(() => {
-    loadDynamicCategories()
-  }, [])
-
-  const loadDynamicCategories = async () => {
-    try {
-      // Fetch products and count by category
-      const { data, error } = await supabase
-        .from('products')
-        .select('category')
-
-      if (error) {
-        console.error('Error loading categories:', error)
-        return
-      }
-
-      if (!data) return
-
-      // Category name mapping (slug -> display name)
-      const categoryNames: Record<string, string> = {
-        't-shirts': 'T-Shirt',
-        'hoodies': 'Felpe',
-        'pants': 'Pantaloni',
-        'accessories': 'Accessori'
-      }
-
-      // Group by category and count
-      const categoryMap = new Map<string, number>()
-      
-      data.forEach(product => {
-        const categoryName = product.category
-        categoryMap.set(categoryName, (categoryMap.get(categoryName) || 0) + 1)
-      })
-
-      // Convert to array with display names
-      const categories = Array.from(categoryMap.entries())
-        .map(([slug, count]) => ({
-          name: categoryNames[slug] || slug,
-          slug: slug,
-          count
-        }))
-        .sort((a, b) => b.count - a.count)
-
-      setDynamicCategories(categories)
-    } catch (error) {
-      console.error('Error loading categories:', error)
-    }
-  }
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50 w-full">
@@ -142,7 +81,7 @@ export function Header() {
                     {isAdminPanelOpen && (
                       <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
                         <div className="px-4 py-2 border-b border-gray-200">
-                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Gestione Negozio</p>
+                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Store Management</p>
                         </div>
                         <Link
                           to="/host/products"
@@ -150,7 +89,7 @@ export function Header() {
                           className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         >
                           <ShoppingBag className="h-4 w-4 mr-3 text-gray-400" />
-                          Gestisci Prodotti
+                          Manage Products
                         </Link>
                         <Link
                           to="/host/users"
@@ -158,17 +97,33 @@ export function Header() {
                           className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         >
                           <Users className="h-4 w-4 mr-3 text-gray-400" />
-                          Gestisci Utenti
+                          Manage Users
+                        </Link>
+                        <Link
+                          to="/host/collections"
+                          onClick={() => setIsAdminPanelOpen(false)}
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          <ShoppingBag className="h-4 w-4 mr-3 text-gray-400" />
+                          Manage Collections
                         </Link>
                       </div>
                     )}
                   </div>
                 )}
                 
+                {/* CTA Scopri Prodotti */}
+                <Link 
+                  to="/products" 
+                  className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-sm"
+                >
+                  Discover Products
+                </Link>
+                
                 <Link 
                   to="/profile" 
                   className="flex items-center space-x-2 p-2 hover:bg-primary-50 rounded-lg transition-colors group"
-                  title="Profilo"
+                  title="Profile"
                 >
                   <User className="h-6 w-6 text-primary-700" />
                   <div className="hidden md:flex flex-col items-start">
@@ -176,27 +131,35 @@ export function Header() {
                       {profile.full_name || profile.email}
                     </span>
                     <span className="text-xs text-gray-500 flex items-center">
-                      {isHost ? 'Host' : 'Cliente'}
+                      {isHost ? 'Host' : 'Customer'}
                     </span>
                   </div>
                 </Link>
               </div>
             ) : (
-              <button 
-                onClick={() => navigate('/auth')}
-                className="flex items-center space-x-2 p-2 hover:bg-primary-50 rounded-lg transition-colors"
-                title="Login"
-              >
-                <User className="h-6 w-6 text-primary-700" />
-                <span className="hidden md:block text-sm font-medium text-primary-700">
-                  Login
-                </span>
-              </button>
+              <>
+                <Link 
+                  to="/products" 
+                  className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-sm"
+                >
+                  Discover Products
+                </Link>
+                <button 
+                  onClick={() => navigate('/auth')}
+                  className="flex items-center space-x-2 p-2 hover:bg-primary-50 rounded-lg transition-colors"
+                  title="Login"
+                >
+                  <User className="h-6 w-6 text-primary-700" />
+                  <span className="hidden md:block text-sm font-medium text-primary-700">
+                    Login
+                  </span>
+                </button>
+              </>
             )}
             <button 
               onClick={() => setIsCartOpen(true)}
               className="p-2 hover:bg-primary-50 rounded-lg transition-colors relative"
-              title="Carrello"
+              title="Cart"
             >
               <ShoppingCart className="h-6 w-6 text-primary-700" />
               {cartCount > 0 && (
@@ -213,60 +176,8 @@ export function Header() {
             </button>
           </div>
         </div>
-
-        {/* Navigation */}
-        <nav className="hidden lg:flex items-center justify-center space-x-8 py-3 border-t border-gray-100">
-          {/* Link Tutti i Prodotti - fisso */}
-          <Link 
-            to="/products" 
-            className="text-gray-700 hover:text-primary-700 transition-colors font-medium"
-          >
-            Tutti i Prodotti
-          </Link>
-
-          {/* Dynamic Categories */}
-          {dynamicCategories.map((category) => (
-            <div key={category.slug} className="relative group">
-              <Link
-                to={`/products?category=${category.slug}`}
-                className="flex items-center text-gray-700 hover:text-primary-700 transition-colors font-medium"
-              >
-                {category.name}
-                <span className="ml-1 text-xs text-gray-500">({category.count})</span>
-              </Link>
-            </div>
-          ))}
-        </nav>
       
       </div>
-
-      {/* Mobile Menu */}
-      {isMenuOpen && (
-        <div className="lg:hidden border-t border-gray-200">
-          <div className="px-4 py-2 space-y-1">
-            {/* Tutti i Prodotti - fisso */}
-            <Link
-              to="/products"
-              className="block px-3 py-2 text-gray-700 hover:text-primary-700 hover:bg-gray-50 rounded-md font-medium"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Tutti i Prodotti
-            </Link>
-
-            {/* Dynamic Categories Mobile */}
-            {dynamicCategories.map((category) => (
-              <Link
-                key={category.slug}
-                to={`/products?category=${category.slug}`}
-                className="block px-3 py-2 text-gray-700 hover:text-primary-700 hover:bg-gray-50 rounded-md font-medium"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                {category.name} ({category.count})
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
       
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </header>
