@@ -5,29 +5,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { useCart } from '../contexts/CartContext'
 import { useNotification } from '../contexts/NotificationContext'
-
-interface Product {
-  id: string
-  title: string
-  description: string
-  price: number
-  category: string
-  tags?: string[]
-  is_active: boolean
-  created_at: string
-}
-
-interface ProductVariant {
-  id: string
-  product_id: string
-  color: string
-  color_hex: string
-  stock_s: number
-  stock_m: number
-  stock_l: number
-  stock_xl: number
-  images: string[]
-}
+import { Product, ProductVariant } from '../types'
 
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>()

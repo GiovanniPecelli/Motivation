@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useSimpleRole } from '../../contexts/SimpleRoleContext'
 import { Crown, Users, Mail, Calendar } from 'lucide-react'
-import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 
 interface UserProfile {

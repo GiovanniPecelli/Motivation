@@ -5,15 +5,7 @@ import { Plus, Trash2, Upload, Crown, ChevronUp, ChevronDown } from 'lucide-reac
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 
-interface Variant {
-  color: string
-  colorHex: string
-  stockS: number
-  stockM: number
-  stockL: number
-  stockXL: number
-  images: string[]
-}
+import { ProductVariant } from '../../types'
 
 const colors = [
   { name: 'Nero', hex: '#000000' },
@@ -38,8 +30,8 @@ export function AddProductSimple() {
   const [collection, setCollection] = useState('')
   const [tags, setTags] = useState('')
 
-  const [variants, setVariants] = useState<Variant[]>([
-    { color: 'Nero', colorHex: '#000000', stockS: 0, stockM: 0, stockL: 0, stockXL: 0, images: [] }
+  const [variants, setVariants] = useState<ProductVariant[]>([
+    { id: '', color: 'Nero', color_hex: '#000000', stock_s: 0, stock_m: 0, stock_l: 0, stock_xl: 0, images: [] }
   ])
 
   const [collections, setCollections] = useState<any[]>([])
@@ -141,7 +133,7 @@ export function AddProductSimple() {
   }
 
   const addVariant = () => {
-    setVariants([...variants, { color: '', colorHex: '#000000', stockS: 0, stockM: 0, stockL: 0, stockXL: 0, images: [] }])
+    setVariants([...variants, { id: '', color: '', color_hex: '#000000', stock_s: 0, stock_m: 0, stock_l: 0, stock_xl: 0, images: [] }])
   }
 
   const removeVariant = (index: number) => {
@@ -150,10 +142,12 @@ export function AddProductSimple() {
     }
   }
 
-  const updateVariant = (index: number, field: keyof Variant, value: any) => {
-    const newVariants = [...variants]
-    newVariants[index] = { ...newVariants[index], [field]: value }
-    setVariants(newVariants)
+  const updateVariant = (index: number, field: keyof ProductVariant, value: any) => {
+    setVariants(prev => {
+      const newVariants = [...prev]
+      newVariants[index] = { ...newVariants[index], [field]: value }
+      return newVariants
+    })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -187,11 +181,11 @@ export function AddProductSimple() {
       const variantData = variants.map(v => ({
         product_id: product.id,
         color: v.color,
-        color_hex: v.colorHex,
-        stock_s: v.stockS,
-        stock_m: v.stockM,
-        stock_l: v.stockL,
-        stock_xl: v.stockXL,
+        color_hex: v.color_hex,
+        stock_s: v.stock_s,
+        stock_m: v.stock_m,
+        stock_l: v.stock_l,
+        stock_xl: v.stock_xl,
         images: v.images
       }))
 
@@ -207,7 +201,7 @@ export function AddProductSimple() {
       setCategory('')
       setTags('')
       setCollection('')
-      setVariants([{ color: 'Nero', colorHex: '#000000', stockS: 0, stockM: 0, stockL: 0, stockXL: 0, images: [] }])
+      setVariants([{ id: '', color: 'Nero', color_hex: '#000000', stock_s: 0, stock_m: 0, stock_l: 0, stock_xl: 0, images: [] }])
 
     } catch (err: any) {
       setMessage(err.message || 'Error during saving')
@@ -353,14 +347,14 @@ export function AddProductSimple() {
                     <div className="flex items-center space-x-2">
                       <div
                         className="w-6 h-6 rounded-full border border-gray-300"
-                        style={{ backgroundColor: variant.colorHex }}
+                        style={{ backgroundColor: variant.color_hex }}
                       />
                       <select
                         value={variant.color}
                         onChange={(e) => {
                           const c = colors.find(x => x.name === e.target.value)
                           updateVariant(vIndex, 'color', e.target.value)
-                          if (c) updateVariant(vIndex, 'colorHex', c.hex)
+                          if (c) updateVariant(vIndex, 'color_hex', c.hex)
                         }}
                         className="px-2 py-1 border border-gray-300 rounded text-sm"
                       >
@@ -382,17 +376,17 @@ export function AddProductSimple() {
                     <label className="block text-xs text-gray-600 mb-2">Quantity per size:</label>
                     <div className="grid grid-cols-4 gap-2">
                       {[
-                        { key: 'stockS', label: 'S' },
-                        { key: 'stockM', label: 'M' },
-                        { key: 'stockL', label: 'L' },
-                        { key: 'stockXL', label: 'XL' }
+                        { key: 'stock_s', label: 'S' },
+                        { key: 'stock_m', label: 'M' },
+                        { key: 'stock_l', label: 'L' },
+                        { key: 'stock_xl', label: 'XL' }
                       ].map(({ key, label }) => (
                         <div key={key} className="text-center">
                           <label className="block text-xs text-gray-500 mb-1">{label}</label>
                           <input
                             type="number"
-                            value={variant[key as keyof Variant] as number}
-                            onChange={(e) => updateVariant(vIndex, key as keyof Variant, parseInt(e.target.value) || 0)}
+                            value={variant[key as keyof ProductVariant] as number}
+                            onChange={(e) => updateVariant(vIndex, key as keyof ProductVariant, parseInt(e.target.value) || 0)}
                             min="0"
                             className="w-full px-2 py-1 border border-gray-300 rounded text-center text-sm"
                           />

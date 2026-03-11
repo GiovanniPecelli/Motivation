@@ -2,39 +2,8 @@ import { useState, useEffect } from 'react';
 import { ProductCard } from '../components/ProductCard';
 import { Search, Filter, Package } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { Product, Collection, ProductVariant } from '../types';
 
-interface Variant {
-  id: string;
-  color: string;
-  color_hex: string;
-  images: string[];
-  stock_s: number;
-  stock_m: number;
-  stock_l: number;
-  stock_xl: number;
-}
-
-interface Product {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  category: string;
-  tags?: string[];
-  collection?: string;
-  variants: Variant[];
-}
-
-interface Collection {
-  id: string;
-  name: string;
-  description?: string;
-  image_url?: string;
-  banner_url?: string;
-  product_count: number;
-  display_order: number;
-  created_at: string;
-}
 
 export function Products() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -139,7 +108,7 @@ export function Products() {
         product.tags?.forEach((tag: string) => allTags.add(tag));
         
         // Extract colors from variants
-        product.variants?.forEach((variant: Variant) => {
+        product.variants?.forEach((variant: ProductVariant) => {
           console.log('Found variant color:', variant.color);
           // Only add colors that are not empty, null, or undefined
           if (variant.color && variant.color.trim() !== '') {

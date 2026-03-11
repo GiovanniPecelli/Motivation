@@ -5,27 +5,8 @@ import { supabase } from '../lib/supabaseClient';
 import { useSimpleRole } from '../contexts/SimpleRoleContext';
 import { useCart } from '../contexts/CartContext';
 import { useNotification } from '../contexts/NotificationContext';
+import { Product } from '../types';
 
-interface Variant {
-  id: string;
-  color: string;
-  color_hex: string;
-  images: string[];
-  stock_s: number;
-  stock_m: number;
-  stock_l: number;
-  stock_xl: number;
-}
-
-interface Product {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  category: string;
-  variants: Variant[];
-  is_featured?: boolean;
-}
 
 interface ProductCardProps {
   product: Product;

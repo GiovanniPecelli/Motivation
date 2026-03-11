@@ -5,26 +5,8 @@ import { Crown, Package, Plus, Edit2, Trash2, Search, Filter, X, Minus, Plus as 
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { useNotification } from '../../contexts/NotificationContext'
+import { Product } from '../../types'
 
-interface Product {
-  id: string
-  title: string
-  description: string
-  price: number
-  category: string
-  is_active: boolean
-  created_at: string
-  variants?: {
-    id: string
-    color: string
-    color_hex: string
-    stock_s: number
-    stock_m: number
-    stock_l: number
-    stock_xl: number
-    images: string[]
-  }[]
-}
 
 export function ManageProducts() {
   const { profile } = useAuth()
@@ -287,7 +269,7 @@ export function ManageProducts() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <button
-                            onClick={() => toggleProductStatus(product.id, product.is_active)}
+                            onClick={() => toggleProductStatus(product.id, product.is_active ?? true)}
                             className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                               product.is_active 
                                 ? 'bg-green-100 text-green-800' 

@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useSimpleRole } from '../../contexts/SimpleRoleContext'
-import { Crown, Plus, Edit2, Trash2, Package } from 'lucide-react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Crown, Edit2, Trash2, Package } from 'lucide-react'
+import { Navigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 
 interface Collection {
@@ -20,7 +20,6 @@ interface Collection {
 export function ManageCollections() {
   const { profile } = useAuth()
   const { isHost } = useSimpleRole()
-  const navigate = useNavigate()
   
   const [collections, setCollections] = useState<Collection[]>([])
   const [loading, setLoading] = useState(true)

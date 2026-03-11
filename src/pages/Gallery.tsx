@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Search, Filter, Grid, List } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
-import { mockProducts } from '../data/mockData';
+import { supabase } from '../lib/supabaseClient';
+import { Product } from '../types';
+import { useEffect } from 'react';
 
 export function Gallery() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -9,9 +11,48 @@ export function Gallery() {
   const [sortBy, setSortBy] = useState('featured');
   const [showFilters, setShowFilters] = useState(false);
 
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const { data: productsData, error: productsError } = await supabase
+        .from('products')
+        .select('*')
+        .eq('is_active', true);
+
+      if (productsError) throw productsError;
+
+      const productsWithVariants = await Promise.all(
+        (productsData || []).map(async (product) => {
+          const { data: variantsData } = await supabase
+            .from('product_variants')
+            .select('*')
+            .eq('product_id', product.id);
+
+          return {
+            ...product,
+            variants: variantsData || []
+          };
+        })
+      );
+
+      setProducts(productsWithVariants);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Filter products based on search
-  const filteredProducts = mockProducts.filter(product =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  const filteredProducts = products.filter(product =>
+    product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     product.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     product.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -199,15 +240,21 @@ export function Gallery() {
         </div>
 
         {/* Products Grid */}
-        <div className={`grid gap-6 ${
-          viewMode === 'grid' 
-            ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
-            : 'grid-cols-1'
-        }`}>
-          {filteredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-600"></div>
+          </div>
+        ) : (
+          <div className={`grid gap-6 ${
+            viewMode === 'grid' 
+              ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
+              : 'grid-cols-1'
+          }`}>
+            {filteredProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        )}
 
         {/* Empty State */}
         {filteredProducts.length === 0 && (

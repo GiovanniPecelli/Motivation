@@ -1,26 +1,17 @@
 import { useState, useRef } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useSimpleRole } from '../../contexts/SimpleRoleContext'
-import { Plus, Trash2, Upload, ImageIcon, Crown } from 'lucide-react'
+import { Plus, Trash2, Upload, Crown, Image as ImageIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
-
-interface ProductVariant {
-  id?: string
-  size: string
-  color: string
-  color_hex: string
-  supply: number
-  sku?: string
-  images: UploadedImage[] // Images specific to this variant
-}
+import { ProductVariant } from '../../types'
 
 interface UploadedImage {
-  url: string
-  name: string
-  size: number
-  type: string
-  variantId?: string // Optional: which variant this image belongs to
+  url: string;
+  name: string;
+  size: number;
+  type: string;
+  variantId?: string;
 }
 
 export function AddProduct() {
@@ -38,13 +29,10 @@ export function AddProduct() {
     specifications: ''
   })
   
-  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([])
+  const [uploadedImages, setUploadedImages] = useState<any[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [variants, setVariants] = useState<ProductVariant[]>([
-    { size: 'S', color: 'Black', color_hex: '#000000', supply: 0, images: [] },
-    { size: 'M', color: 'Black', color_hex: '#000000', supply: 0, images: [] },
-    { size: 'L', color: 'Black', color_hex: '#000000', supply: 0, images: [] },
-    { size: 'XL', color: 'Black', color_hex: '#000000', supply: 0, images: [] }
+    { id: '', color: 'Black', color_hex: '#000000', stock_s: 0, stock_m: 0, stock_l: 0, stock_xl: 0, images: [] }
   ])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
@@ -61,11 +49,6 @@ export function AddProduct() {
     )
   }
 
-  const categories = [
-    { id: 'men', name: 'Men', subcategories: ['T-Shirts & Tanks', 'Pants & Shorts', 'Hoodies & Sweatshirts', 'Motivation Pro'] },
-    { id: 'women', name: 'Women', subcategories: ['Leggings & Shorts', 'Sports Bras & Tops', 'T-Shirts & Crop Tops', 'Hoodies & Sweatshirts', 'Motivation Pro'] },
-    { id: 'accessories', name: 'Accessories', subcategories: ['Wrist Wraps & Tape', 'Knee & Elbow Sleeves', 'Grips & Straps', 'Belts & Lever Belts', 'Socks & Lifestyle', 'Backpacks', 'Patches'] }
-  ]
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -165,7 +148,7 @@ export function AddProduct() {
                 name: file.name,
                 size: file.size,
                 type: file.type,
-                variantId: variants[variantIndex].color + variants[variantIndex].size
+                variantId: variants[variantIndex].color
               })
             }
           })
@@ -181,7 +164,7 @@ export function AddProduct() {
           const updated = [...prev]
           updated[variantIndex] = { 
             ...updated[variantIndex], 
-            images: [...updated[variantIndex].images, ...results] 
+            images: [...updated[variantIndex].images, ...results.map(r => r.url)]
           }
           return updated
         })
@@ -207,33 +190,23 @@ export function AddProduct() {
   }
 
   const addVariant = () => {
-    setVariants(prev => [...prev, { size: 'S', color: 'Black', color_hex: '#000000', supply: 0, images: [] }])
-  }
-
-  const updateVariant = (index: number, field: keyof ProductVariant, value: string | number) => {
-    setVariants(prev => {
-      const updated = [...prev]
-      updated[index] = { ...updated[index], [field]: value } as ProductVariant
-      return updated
-    })
+    setVariants(prev => [...prev, { id: '', color: '', color_hex: '#000000', stock_s: 0, stock_m: 0, stock_l: 0, stock_xl: 0, images: [] }])
   }
 
   const removeVariant = (index: number) => {
     setVariants(prev => prev.filter((_, i) => i !== index))
   }
 
-  const addColorToAllVariants = (color: string, color_hex: string) => {
+  const updateVariant = (index: number, field: keyof ProductVariant, value: any) => {
     setVariants(prev => {
-      const uniqueSizes = [...new Set(prev.map(v => v.size))]
-      return uniqueSizes.map(size => ({ size, color, color_hex, supply: 0, images: [] }))
+      const newVariants = [...prev]
+      newVariants[index] = { ...newVariants[index], [field]: value }
+      return newVariants
     })
   }
 
-  const addSizeToAllVariants = (size: string) => {
-    setVariants(prev => {
-      const uniqueColors = [...new Set(prev.map(v => v.color))]
-      return uniqueColors.map(color => ({ size, color, color_hex: prev.find(v => v.color === color)?.color_hex || '#000000', supply: 0, images: [] }))
-    })
+  const addColorToAllVariants = (color: string, color_hex: string) => {
+    setVariants(prev => [...prev, { id: '', color, color_hex, stock_s: 0, stock_m: 0, stock_l: 0, stock_xl: 0, images: [] }])
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -269,24 +242,24 @@ export function AddProduct() {
         return
       }
 
-      const variantsData = variants.map(variant => ({
+      // Update variants with product_id
+      const variantData = variants.map(v => ({
         product_id: product.id,
-        size: variant.size,
-        color: variant.color,
-        color_hex: variant.color_hex,
-        supply: variant.supply,
-        sku: `${formData.title.substring(0, 3).toUpperCase()}-${variant.color}-${variant.size}`.replace(/\s+/g, '-'),
-        images: variant.images.map(img => img.url)
+        color: v.color,
+        color_hex: v.color_hex,
+        stock_s: v.stock_s,
+        stock_m: v.stock_m,
+        stock_l: v.stock_l,
+        stock_xl: v.stock_xl,
+        images: v.images
       }))
 
-      const { error: variantsError } = await supabase
+      const { error: variantError } = await supabase
         .from('product_variants')
-        .insert(variantsData)
+        .insert(variantData)
 
-      if (variantsError) {
-        console.error('Error inserting variants:', variantsError)
-        setSubmitError('Error saving variants')
-      } else {
+      if (variantError) throw variantError
+      else {
         setSubmitSuccess('Product and variants added successfully!')
         
         setFormData({
@@ -300,10 +273,7 @@ export function AddProduct() {
         })
         setUploadedImages([])
         setVariants([
-          { size: 'S', color: 'Black', color_hex: '#000000', supply: 0, images: [] },
-          { size: 'M', color: 'Black', color_hex: '#000000', supply: 0, images: [] },
-          { size: 'L', color: 'Black', color_hex: '#000000', supply: 0, images: [] },
-          { size: 'XL', color: 'Black', color_hex: '#000000', supply: 0, images: [] }
+          { id: '', color: 'Black', color_hex: '#000000', stock_s: 0, stock_m: 0, stock_l: 0, stock_xl: 0, images: [] }
         ])
       }
     } catch (error) {
@@ -612,55 +582,43 @@ Label: Embroidered"
                       {variants.map((variant, variantIndex) => (
                         <div key={variantIndex} className="bg-white rounded-lg p-4 border border-gray-200">
                           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">Size</label>
-                              <select
-                                value={variant.size}
-                                onChange={(e) => updateVariant(variantIndex, 'size', e.target.value)}
-                                className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-500"
-                              >
-                                <option value="XS">XS</option>
-                                <option value="S">S</option>
-                                <option value="M">M</option>
-                                <option value="L">L</option>
-                                <option value="XL">XL</option>
-                                <option value="XXL">XXL</option>
-                                <option value="3XL">3XL</option>
-                              </select>
-                            </div>
-                            
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">Color</label>
-                              <input
-                                type="text"
-                                value={variant.color}
-                                onChange={(e) => updateVariant(variantIndex, 'color', e.target.value)}
-                                className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-500"
-                                placeholder="Black"
-                              />
-                            </div>
-                            
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">Color Hex</label>
-                              <input
-                                type="text"
-                                value={variant.color_hex}
-                                onChange={(e) => updateVariant(variantIndex, 'color_hex', e.target.value)}
-                                className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-500"
-                                placeholder="#000000"
-                              />
-                            </div>
-                            
-                            <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">Supply</label>
-                              <input
-                                type="number"
-                                value={variant.supply}
-                                onChange={(e) => updateVariant(variantIndex, 'supply', parseInt(e.target.value) || 0)}
-                                className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-500"
-                                placeholder="0"
-                                min="0"
-                              />
+                            <div className="md:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-4">
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Stock S</label>
+                                <input
+                                  type="number"
+                                  value={variant.stock_s}
+                                  onChange={(e) => updateVariant(variantIndex, 'stock_s', parseInt(e.target.value) || 0)}
+                                  className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Stock M</label>
+                                <input
+                                  type="number"
+                                  value={variant.stock_m}
+                                  onChange={(e) => updateVariant(variantIndex, 'stock_m', parseInt(e.target.value) || 0)}
+                                  className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Stock L</label>
+                                <input
+                                  type="number"
+                                  value={variant.stock_l}
+                                  onChange={(e) => updateVariant(variantIndex, 'stock_l', parseInt(e.target.value) || 0)}
+                                  className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Stock XL</label>
+                                <input
+                                  type="number"
+                                  value={variant.stock_xl}
+                                  onChange={(e) => updateVariant(variantIndex, 'stock_xl', parseInt(e.target.value) || 0)}
+                                  className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-500"
+                                />
+                              </div>
                             </div>
                             
                             <div className="flex items-end">
@@ -676,12 +634,12 @@ Label: Embroidered"
 
                           <div className="border-t pt-4">
                             <div className="flex items-center justify-between mb-3">
-                              <h4 className="text-sm font-medium text-gray-900">
-                                Images for {variant.color} - {variant.size}
-                              </h4>
-                              <div className="flex items-center space-x-2">
-                                <div className="w-6 h-6 rounded border border-gray-300" style={{ backgroundColor: variant.color_hex }}></div>
-                                <span className="text-xs text-gray-500">{variant.images.length} images</span>
+                               <h4 className="text-sm font-medium text-gray-900">
+                                 Images for {variant.color}
+                               </h4>
+                               <div className="flex items-center space-x-2">
+                                 <div className="w-6 h-6 rounded border border-gray-300" style={{ backgroundColor: variant.color_hex }}></div>
+                                 <span className="text-xs text-gray-500">{variant.images.length} images</span>
                               </div>
                             </div>
 
@@ -697,7 +655,7 @@ Label: Embroidered"
                               <label htmlFor={`variant-images-${variantIndex}`} className="cursor-pointer">
                                 <ImageIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                                 <p className="text-xs font-medium text-gray-900 mb-1">
-                                  Images for {variant.color} {variant.size}
+                                  Images for {variant.color}
                                 </p>
                                 <p className="text-xs text-gray-500">
                                   Click to add specific images for this variant
@@ -711,8 +669,8 @@ Label: Embroidered"
                                   <div key={imageIndex} className="relative group">
                                     <div className="aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
                                       <img
-                                        src={image.url}
-                                        alt={`${variant.color} ${variant.size} ${imageIndex + 1}`}
+                                        src={image}
+                                        alt={`${variant.color} ${imageIndex + 1}`}
                                         className="w-full h-full object-cover"
                                       />
                                     </div>
@@ -766,37 +724,6 @@ Label: Embroidered"
                         </div>
                       </div>
                       
-                      <div className="flex-1">
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Add size to all colors</label>
-                        <div className="flex space-x-2">
-                          <select
-                            className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-500"
-                            id="sizeSelect"
-                          >
-                            <option value="">Select</option>
-                            <option value="XS">XS</option>
-                            <option value="S">S</option>
-                            <option value="M">M</option>
-                            <option value="L">L</option>
-                            <option value="XL">XL</option>
-                            <option value="XXL">XXL</option>
-                            <option value="3XL">3XL</option>
-                          </select>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const sizeSelect = document.getElementById('sizeSelect') as HTMLSelectElement
-                              if (sizeSelect && sizeSelect.value) {
-                                addSizeToAllVariants(sizeSelect.value)
-                                sizeSelect.value = ''
-                              }
-                            }}
-                            className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
-                          >
-                            Add
-                          </button>
-                        </div>
-                      </div>
                     </div>
                   </div>
                 </div>
