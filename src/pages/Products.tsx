@@ -185,6 +185,7 @@ export function Products() {
   // Get color hex code
   const getColorHex = (colorName: string) => {
     const colorMap: Record<string, string> = {
+      // Italian colors
       'Nero': '#000000',
       'Bianco': '#FFFFFF',
       'Grigio': '#808080',
@@ -195,6 +196,25 @@ export function Products() {
       'Arancione': '#FFA500',
       'Viola': '#800080',
       'Rosa': '#FFC0CB',
+      'Marrone': '#8B4513',
+      'Beige': '#F5F5DC',
+      // English colors
+      'Black': '#000000',
+      'White': '#FFFFFF',
+      'Gray': '#808080',
+      'Grey': '#808080',
+      'Blue': '#0000FF',
+      'Red': '#FF0000',
+      'Green': '#008000',
+      'Yellow': '#FFFF00',
+      'Orange': '#FFA500',
+      'Purple': '#800080',
+      'Pink': '#FFC0CB',
+      'Brown': '#8B4513',
+      // Common variations
+      'Nera': '#000000',
+      'Bianca': '#FFFFFF',
+      'Grigia': '#808080',
     };
     return colorMap[colorName] || '#CCCCCC';
   };
