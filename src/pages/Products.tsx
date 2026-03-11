@@ -55,19 +55,31 @@ export function Products() {
       // Fetch products with variants
       const { data: productsData, error: productsError } = await supabase
         .from('products')
-        .select('*, tags, collection')
+        .select('*')
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
-      if (productsError) throw productsError;
+      if (productsError) {
+        console.error('Products error:', productsError);
+        throw productsError;
+      }
+
+      console.log('Products data:', productsData);
+      console.log('Number of products:', productsData?.length || 0);
 
       // Fetch variants for each product
       const productsWithVariants = await Promise.all(
         (productsData || []).map(async (product) => {
-          const { data: variantsData } = await supabase
+          const { data: variantsData, error: variantsError } = await supabase
             .from('product_variants')
             .select('*')
             .eq('product_id', product.id);
+
+          if (variantsError) {
+            console.error('Variants error for product', product.id, variantsError);
+          }
+
+          console.log('Variants for product', product.id, variantsData);
 
           return {
             ...product,
@@ -77,6 +89,7 @@ export function Products() {
       );
 
       setProducts(productsWithVariants);
+      console.log('Final products with variants:', productsWithVariants);
       
       // Extract available tags and colors
       const allTags = new Set<string>();
@@ -84,6 +97,8 @@ export function Products() {
       const collectionsMap = new Map<string, number>();
 
       productsWithVariants.forEach(product => {
+        console.log('Processing product:', product.title, product);
+        
         // Count collections
         if (product.collection) {
           collectionsMap.set(product.collection, (collectionsMap.get(product.collection) || 0) + 1);
@@ -97,6 +112,10 @@ export function Products() {
           allColors.add(variant.color);
         });
       });
+
+      console.log('Available tags:', Array.from(allTags));
+      console.log('Available colors:', Array.from(allColors));
+      console.log('Collections:', Array.from(collectionsMap.entries()));
 
       setAvailableTags(Array.from(allTags).sort());
       setAvailableColors(Array.from(allColors).sort());
